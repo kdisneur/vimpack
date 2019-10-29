@@ -1,0 +1,135 @@
+# THIS FILE IS GENERATED, DO NOT EDIT MANUALLY.
+# SOURCE: config.yml.in
+version: 2.1
+
+executors:
+  golang:
+    docker:
+      - image: circleci/golang:1.13.4
+
+commands:
+  build_binary:
+    parameters:
+      arch:
+        type: string
+      os:
+        type: string
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v2-dependency-cache
+      - run:
+          command: make build OS=<< parameters.os>> ARCH=<< parameters.arch >> BUILD_OPTIONS="-mod=vendor"
+      - persist_to_workspace:
+          root: dist
+          paths:
+            - vimpack-<< parameters.os >>-<< parameters.arch >>.tgz
+            - vimpack-<< parameters.os >>-<< parameters.arch >>
+
+jobs:
+  setup:
+    executor: golang
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v2-dependency-cache
+      - run:
+          command: go mod vendor
+      - run:
+          command: |
+            mkdir -p ~/tools
+            make setup
+            cp /go/bin/ghr ~/tools
+            cp /go/bin/golint ~/tools
+            cp /go/bin/mockgen ~/tools
+      - save_cache:
+          key: v2-dependency-cache
+          paths:
+            - ~/tools
+            - vendor
+
+  test:
+    executor: golang
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            -  v2-dependency-cache
+      - run:
+          command: make test-unit TEST_OPTIONS="-v -mod=vendor"
+      - run:
+          command: make test-style GOLINT_PATH=~/tools/golint
+      - run:
+          command: |
+            sudo apt install m4 >/dev/null
+            make test-circleci-config
+
+  build_darwin_386:
+    executor: golang
+    steps:
+      - build_binary:
+          os: "darwin"
+          arch: "386"
+
+  build_linux_amd64:
+    executor: golang
+    steps:
+      - build_binary:
+          os: "linux"
+          arch: "amd64"
+
+  build_linux_386:
+    executor: golang
+    steps:
+      - build_binary:
+          os: "linux"
+          arch: "386"
+
+  publish:
+    executor: golang
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v2-dependency-cache
+      - attach_workspace:
+          at: ./artifacts
+      - run:
+          command: |
+            VERSION="$(cat VERSION)"
+            IS_PRERELEASE=$(if [ "${CIRCLE_BRANCH}" = "master" ]; then echo ""; else echo "-prerelease"; fi)
+
+            mkdir ghr-artifacts
+            cp ./artifacts/*.tgz ghr-artifacts
+
+            ~/tools/ghr -t ${GITHUB_TOKEN} \
+                -u ${CIRCLE_PROJECT_USERNAME} \
+                -r ${CIRCLE_PROJECT_REPONAME} \
+                -c ${CIRCLE_SHA1} \
+                ${IS_PRERELEASE} \
+                ${VERSION} ./ghr-artifacts
+workflows:
+  version: 2
+  vimpack:
+    jobs:
+      - setup
+      - test:
+          requires:
+            - setup
+      - build_darwin_386:
+          requires:
+            - setup
+      - build_linux_amd64:
+          requires:
+            - setup
+      - build_linux_386:
+          requires:
+            - setup
+      - publish:
+          requires:
+            - build_darwin_386
+            - build_linux_amd64
+            - build_linux_386
+            - test

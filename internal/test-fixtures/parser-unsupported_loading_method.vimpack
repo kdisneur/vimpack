@@ -1,0 +1,5 @@
+namespace "anamespace"
+
+onstart "johndoe/plugin1"
+ondemand "janedoe/plugin2"
+onanything "johndoe/plugin2"

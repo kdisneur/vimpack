@@ -1,0 +1,13 @@
+asset: vimpack-darwin-386.tgz
+tap: kdisneur/homebrew-formulae/Formula/vimpack.rb
+template: |
+  class Vimpack < Formula
+    desc     "$REPO_DESCRIPTION"
+    homepage "$REPO_WEBSITE"
+    version  "$STABLE_VERSION"
+    url      "$STABLE_URL"
+    sha256   "$STABLE_SHA256"
+    def install
+      bin.install "vimpack"
+    end
+  end
