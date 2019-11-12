@@ -15,6 +15,7 @@ ALREADY_RELEASED := $(shell if [ $$(curl --silent --output /dev/null --write-out
 
 GOFMT_PATH = gofmt
 GOLINT_PATH = golint
+STATICCHECK_PATH = staticcheck
 
 PACKAGE = internal
 MOCK_PACKAGE = $(PACKAGE)/mock_$(PACKAGE)
@@ -30,6 +31,7 @@ setup:
 	go get github.com/tcnksm/ghr
 	go get golang.org/x/lint/golint
 	go get github.com/golang/mock/mockgen
+	go get honnef.co/go/tools/cmd/staticcheck
 
 build: _dependencies
 	@if [ "$(ALREADY_RELEASED)" = "true" ]; then \
@@ -77,6 +79,9 @@ test-style: _gofmt _golint
 
 test-unit:
 	go test $(TEST_OPTIONS) ./...
+
+test-staticcheck:
+	$(STATICCHECK_PATH) ./...
 
 _dependencies:
 	go mod download
