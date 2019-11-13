@@ -42,8 +42,8 @@ func main() {
 }
 
 func cancelOnKill(ctx context.Context, cancelFunc func()) {
-	killSignal := make(chan os.Signal)
-	signal.Notify(killSignal, os.Interrupt, os.Kill)
+	killSignal := make(chan os.Signal, 3)
+	signal.Notify(killSignal, os.Interrupt)
 
 	go func(sig <-chan os.Signal, cancelFunc func()) {
 		<-sig

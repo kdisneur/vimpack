@@ -18,7 +18,7 @@ commands:
       - checkout
       - restore_cache:
           keys:
-            - v2-dependency-cache
+            - v3-dependency-cache
       - run:
           command: make build OS=<< parameters.os>> ARCH=<< parameters.arch >> BUILD_OPTIONS="-mod=vendor"
       - persist_to_workspace:
@@ -34,7 +34,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v2-dependency-cache
+            - v3-dependency-cache
       - run:
           command: go mod vendor
       - run:
@@ -44,8 +44,9 @@ jobs:
             cp /go/bin/ghr ~/tools
             cp /go/bin/golint ~/tools
             cp /go/bin/mockgen ~/tools
+            cp /go/bin/staticcheck ~/tools
       - save_cache:
-          key: v2-dependency-cache
+          key: v3-dependency-cache
           paths:
             - ~/tools
             - vendor
@@ -56,11 +57,13 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            -  v2-dependency-cache
+            -  v3-dependency-cache
       - run:
           command: make test-unit TEST_OPTIONS="-v -mod=vendor"
       - run:
           command: make test-style GOLINT_PATH=~/tools/golint
+      - run:
+          command: make test-staticcheck STATICCHECK_PATH=~/tools/staticcheck
       - run:
           command: |
             sudo apt install m4 >/dev/null
@@ -93,23 +96,11 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v2-dependency-cache
+            - v3-dependency-cache
       - attach_workspace:
-          at: ./artifacts
+          at: ./dist
       - run:
-          command: |
-            VERSION="$(cat VERSION)"
-            IS_PRERELEASE=$(if [ "${CIRCLE_BRANCH}" = "master" ]; then echo ""; else echo "-prerelease"; fi)
-
-            mkdir ghr-artifacts
-            cp ./artifacts/*.tgz ghr-artifacts
-
-            ~/tools/ghr -t ${GITHUB_TOKEN} \
-                -u ${CIRCLE_PROJECT_USERNAME} \
-                -r ${CIRCLE_PROJECT_REPONAME} \
-                -c ${CIRCLE_SHA1} \
-                ${IS_PRERELEASE} \
-                ${VERSION} ./ghr-artifacts
+          command: make release GHR_PATH=~/tools/ghr GITHUB_TOKEN=${GITHUB_TOKEN} PROJECT_USERNAME=${CIRCLE_PROJECT_USERNAME} PROJECT_REPOSITORY=${CIRCLE_PROJECT_REPONAME}
 workflows:
   version: 2
   vimpack:

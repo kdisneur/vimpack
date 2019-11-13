@@ -44,9 +44,9 @@ func (p *Parser) Parse(filename string, config io.Reader) ([]*Plugin, error) {
 		case "\n":
 			continue
 		case "namespace":
-			p.parseNamespace(&s, token)
+			p.parseNamespace(&s)
 		case "onstart", "ondemand":
-			p.parsePlugin(&s, token)
+			p.parsePlugin(&s)
 		default:
 			p.err = fmt.Errorf("%s: unexpected token: %s", s.Position, s.TokenText())
 		}
@@ -59,7 +59,7 @@ func (p *Parser) Parse(filename string, config io.Reader) ([]*Plugin, error) {
 	return p.plugins, p.err
 }
 
-func (p *Parser) parsePlugin(s *scanner.Scanner, token rune) {
+func (p *Parser) parsePlugin(s *scanner.Scanner) {
 	var loading Loading
 	if s.TokenText() == "onstart" {
 		loading = LoadingStart
@@ -75,7 +75,7 @@ func (p *Parser) parsePlugin(s *scanner.Scanner, token rune) {
 		return
 	}
 
-	token = s.Scan()
+	token := s.Scan()
 	if token != scanner.String {
 		p.err = fmt.Errorf("%s: expected string got: %s", s.Position, s.TokenText())
 		return
@@ -104,8 +104,8 @@ func (p *Parser) parsePlugin(s *scanner.Scanner, token rune) {
 	p.plugins = append(p.plugins, plugin)
 }
 
-func (p *Parser) parseNamespace(s *scanner.Scanner, token rune) {
-	token = s.Scan()
+func (p *Parser) parseNamespace(s *scanner.Scanner) {
+	token := s.Scan()
 	if token != scanner.String {
 		p.err = fmt.Errorf("%s: expected string got: %s", s.Position, s.TokenText())
 		return

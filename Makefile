@@ -8,13 +8,20 @@ FULL_BINARY_NAME := $(BINARY_NAME)-$(OS)-$(ARCH)
 
 VERSION := $$(cat VERSION)
 
+PROJECT_USERNAME := kdisneur
+PROJECT_REPOSITORY := vimpack
+GITHUB_TOKEN :=
+
 GIT_COMMIT := $(shell git rev-parse HEAD)
 GIT_BRANCH := $(shell git branch --no-color | awk '/^\* / { print $$2 }')
 GIT_STATE := $(shell if [ -z "$(shell git status --short)" ]; then echo clean; else echo dirty; fi)
-ALREADY_RELEASED := $(shell if [ $$(curl --silent --output /dev/null --write-out "%{http_code}" https://api.github.com/repos/kdisneur/vimpack/releases/tags/$(VERSION)) -eq 200 ]; then echo "true"; else echo "false"; fi)
+ALREADY_RELEASED := $(shell if [ $$(curl --silent --output /dev/null --write-out "%{http_code}" https://api.github.com/repos/$(PROJECT_USERNAME)/$(PROJECT_REPOSITORY)/releases/tags/$(VERSION)) -eq 200 ]; then echo "true"; else echo "false"; fi)
+PRERELASE := $(shell if [ "$(GIT_BRANCH)" != "master" ]; then echo "true"; else echo "false"; fi)
 
 GOFMT_PATH = gofmt
 GOLINT_PATH = golint
+GHR_PATH = ghr
+STATICCHECK_PATH = staticcheck
 
 PACKAGE = internal
 MOCK_PACKAGE = $(PACKAGE)/mock_$(PACKAGE)
@@ -30,12 +37,9 @@ setup:
 	go get github.com/tcnksm/ghr
 	go get golang.org/x/lint/golint
 	go get github.com/golang/mock/mockgen
+	go get honnef.co/go/tools/cmd/staticcheck
 
 build: _dependencies
-	@if [ "$(ALREADY_RELEASED)" = "true" ]; then \
-		echo "$(VERSION) already released."; \
-		exit 1; \
-	fi
 	@touch internal/version.go
 
 	GOOS=$(OS) GOARCH=$(ARCH) go build $(BUILD_OPTIONS) \
@@ -52,6 +56,21 @@ build: _dependencies
 
 	@mv $(BUILD_FOLDER)/$(BINARY_NAME) $(BUILD_FOLDER)/$(FULL_BINARY_NAME)
 	@echo "archive generated at $(BUILD_FOLDER)/$(FULL_BINARY_NAME)"
+
+release:
+	VERSION_NAME=$(VERSION); \
+	if [ $(ALREADY_RELEASED) = "true" ]; then \
+	  echo "Already released $(VERSION)... create pre-release"; \
+	  VERSION_NAME="$(GIT_BRANCH)-$(GIT_COMMIT)"; \
+	fi; \
+	tmpfolder=$$(mktemp -d /tmp/$(PROJECT_REPOSITORY)-artifacts-XXXXX);\
+	cp $(BUILD_FOLDER)/*.tgz $${tmpfolder}; \
+	$(GHR_PATH) -t $(GITHUB_TOKEN) \
+		-u $(PROJECT_USERNAME) \
+		-r $(PROJECT_REPOSITORY) \
+		-c $(GIT_COMMIT) \
+		$$(if [ "$(PRERELASE)" = "true" ]; then echo "-prerelease"; else echo ""; fi) \
+		$${VERSION_NAME} $${tmpfolder};
 
 refresh-mocks: $(MOCK_FILES)
 
@@ -77,6 +96,9 @@ test-style: _gofmt _golint
 
 test-unit:
 	go test $(TEST_OPTIONS) ./...
+
+test-staticcheck:
+	$(STATICCHECK_PATH) ./...
 
 _dependencies:
 	go mod download
