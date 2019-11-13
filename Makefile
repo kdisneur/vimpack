@@ -58,9 +58,10 @@ build: _dependencies
 	@echo "archive generated at $(BUILD_FOLDER)/$(FULL_BINARY_NAME)"
 
 release:
-	@if [ $(ALREADY_RELEASED) = "true" ]; then \
-	  echo "Already released... skipping" \
-	  exit 0; \
+	VERSION_NAME=$(VERSION); \
+	if [ $(ALREADY_RELEASED) = "true" ]; then \
+	  echo "Already released $(VERSION)... create pre-release"; \
+	  VERSION_NAME="$(GIT_BRANCH)-$(GIT_COMMIT)"; \
 	fi; \
 	tmpfolder=$$(mktemp -d /tmp/$(PROJECT_REPOSITORY)-artifacts-XXXXX);\
 	cp $(BUILD_FOLDER)/*.tgz $${tmpfolder}; \
@@ -69,7 +70,7 @@ release:
 		-r $(PROJECT_REPOSITORY) \
 		-c $(GIT_COMMIT) \
 		$$(if [ "$(PRERELASE)" = "true" ]; then echo "-prerelease"; else echo ""; fi) \
-		$(VERSION) $${tmpfolder};
+		$${VERSION_NAME} $${tmpfolder};
 
 refresh-mocks: $(MOCK_FILES)
 

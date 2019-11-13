@@ -96,7 +96,7 @@ jobs:
           keys:
             - v3-dependency-cache
       - attach_workspace:
-          at: ./artifacts
+          at: ./dist
       - run:
           command: make release GHR_PATH=~/tools/ghr GITHUB_TOKEN=${GITHUB_TOKEN} PROJECT_USERNAME=${CIRCLE_PROJECT_USERNAME} PROJECT_REPOSITORY=${CIRCLE_PROJECT_REPONAME}
 workflows:
