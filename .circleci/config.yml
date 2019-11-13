@@ -100,19 +100,7 @@ jobs:
       - attach_workspace:
           at: ./artifacts
       - run:
-          command: |
-            VERSION="$(cat VERSION)"
-            IS_PRERELEASE=$(if [ "${CIRCLE_BRANCH}" = "master" ]; then echo ""; else echo "-prerelease"; fi)
-
-            mkdir ghr-artifacts
-            cp ./artifacts/*.tgz ghr-artifacts
-
-            ~/tools/ghr -t ${GITHUB_TOKEN} \
-                -u ${CIRCLE_PROJECT_USERNAME} \
-                -r ${CIRCLE_PROJECT_REPONAME} \
-                -c ${CIRCLE_SHA1} \
-                ${IS_PRERELEASE} \
-                ${VERSION} ./ghr-artifacts
+          command: make release GHR_PATH=~/tools/ghr GITHUB_TOKEN=${GITHUB_TOKEN} PROJECT_USERNAME=${CIRCLE_PROJECT_USERNAME} PROJECT_REPOSITORY=${CIRCLE_PROJECT_REPONAME}
 workflows:
   version: 2
   vimpack:
