@@ -5,7 +5,7 @@ version: 2.1
 executors:
   golang:
     docker:
-      - image: circleci/golang:1.13.4
+      - image: circleci/golang:1.13.5
 
 commands:
   build_binary:
@@ -69,6 +69,13 @@ jobs:
             sudo apt install m4 >/dev/null
             make test-circleci-config
 
+  build_darwin_amd64:
+    executor: golang
+    steps:
+      - build_binary:
+          os: "darwin"
+          arch: "amd64"
+
   build_darwin_386:
     executor: golang
     steps:
@@ -109,6 +116,9 @@ workflows:
       - test:
           requires:
             - setup
+      - build_darwin_amd64:
+          requires:
+            - setup
       - build_darwin_386:
           requires:
             - setup
@@ -120,6 +130,7 @@ workflows:
             - setup
       - publish:
           requires:
+            - build_darwin_amd64
             - build_darwin_386
             - build_linux_amd64
             - build_linux_386

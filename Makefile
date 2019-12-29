@@ -2,7 +2,7 @@ BUILD_FOLDER = dist
 BUILD_OPTIONS =
 
 OS := darwin
-ARCH := 386
+ARCH := amd64
 BINARY_NAME := "vimpack"
 FULL_BINARY_NAME := $(BINARY_NAME)-$(OS)-$(ARCH)
 

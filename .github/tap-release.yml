@@ -1,4 +1,4 @@
-asset: vimpack-darwin-386.tgz
+asset: vimpack-darwin-amd64.tgz
 tap: kdisneur/homebrew-formulae/Formula/vimpack.rb
 template: |
   class Vimpack < Formula
