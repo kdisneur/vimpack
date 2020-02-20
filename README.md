@@ -7,7 +7,7 @@ Vimpack defines a file format respecting vim's package manager structure and let
 Here an example:
 
 ```
-// ~/.vim/Packfile
+// ~/.vim/Vimpackfile
 namespace "musthave"
 
 onstart "tpope/vim-commentary"
