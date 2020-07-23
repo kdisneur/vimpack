@@ -63,6 +63,9 @@ packloadall
 
 ## Usage
 
+> Be aware that Vimpack will try to clone the plugins using SSH. Your SSH key should be configured to work with Github and should be added to the ssh-agent.
+> More informations can be found in [Github Documentation](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
+
 ```
 Usage of vimpack:
   -dest string
